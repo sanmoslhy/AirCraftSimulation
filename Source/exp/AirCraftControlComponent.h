@@ -67,6 +67,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* YawAction;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class UStaticMeshComponent* ThrottleMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMeshComponent* MixtureMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMeshComponent* BrakeMesh;
 
 	// ===== FUNCTIONS =====
 	void OnPitchInput(const FInputActionValue& Value);
@@ -96,6 +104,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* ThrottleAction;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* MixtureAction;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* BrakeAction;
 
 	// ================= EVENTS =================
 	UPROPERTY(BlueprintAssignable)
@@ -108,8 +120,6 @@ public:
 	FOnAxisChanged OnBrakeChanged;
 
 	// ================= FUNCTIONS =================
-	UFUNCTION(BlueprintCallable)
-	void SetThrottleInAriCraft(float Value);
 
 	UFUNCTION(BlueprintCallable)
 	void SetMixture(float Value);
@@ -117,8 +127,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetBrake(float Value);
 	void OnThrottleInput(const FInputActionValue& Value);
-
+	void OnMixtureInput(const FInputActionValue& Value);
+	void OnBrakeInput(const FInputActionValue& Value);
 private:
+	
 	float ApplyDeadZone(float Value);
 		
 };

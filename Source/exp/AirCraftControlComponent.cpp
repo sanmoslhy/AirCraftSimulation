@@ -2,6 +2,7 @@
 
 
 #include "AirCraftControlComponent.h"
+#include"Components/StaticMeshComponent.h"
 
 // Sets default values for this component's properties
 UAirCraftControlComponent::UAirCraftControlComponent()
@@ -26,7 +27,27 @@ void UAirCraftControlComponent::BeginPlay()
 	Super::BeginPlay();
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
+	// ===== Find Meshes By Tag =====
+	TArray<UActorComponent*> Components = Owner->GetComponentsByClass(UStaticMeshComponent::StaticClass());
 
+	for (UActorComponent* Comp : Components)
+	{
+		UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(Comp);
+		if (!Mesh) continue;
+
+		if (Mesh->ComponentHasTag(FName("Throttle")))
+		{
+			ThrottleMesh = Mesh;
+		}
+		else if (Mesh->ComponentHasTag(FName("Mixture")))
+		{
+			MixtureMesh = Mesh;
+		}
+		else if (Mesh->ComponentHasTag(FName("Brake")))
+		{
+			BrakeMesh = Mesh;
+		}
+	}
 	APlayerController* PC = Cast<APlayerController>(Owner->GetInstigatorController());
 	if (!PC)
 	{
@@ -67,6 +88,15 @@ void UAirCraftControlComponent::BeginPlay()
 			{
 				EIC->BindAction(YawAction, ETriggerEvent::Triggered, this, &UAirCraftControlComponent::OnYawInput);
 			}
+			if (MixtureAction)
+			{
+				EIC->BindAction(MixtureAction, ETriggerEvent::Triggered, this, &UAirCraftControlComponent::OnMixtureInput);
+			}
+
+			if (BrakeAction)
+			{
+				EIC->BindAction(BrakeAction, ETriggerEvent::Triggered, this, &UAirCraftControlComponent::OnBrakeInput);
+			}
 		}
 	}
 	}
@@ -81,7 +111,7 @@ void UAirCraftControlComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 	// ===== Movement =====
 	FVector Forward = Owner->GetActorForwardVector();
-	Owner->AddActorWorldOffset(Forward * Throttle * MoveSpeed * DeltaTime);
+	//Owner->AddActorWorldOffset(Forward * Throttle * MoveSpeed * DeltaTime);
 
 	// ===== Rotation =====
 	FRotator RotationDelta;
@@ -89,7 +119,40 @@ void UAirCraftControlComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	RotationDelta.Roll = Roll * RotationSpeed * DeltaTime;
 	RotationDelta.Yaw = Yaw * RotationSpeed * DeltaTime;
 
-	Owner->AddActorLocalRotation(RotationDelta);
+	//Owner->AddActorLocalRotation(RotationDelta);
+	// ===== VISUAL CONTROLS =====
+
+	if (ThrottleMesh)
+	{
+		float Offset = Throttle * 20.f;
+
+		FVector Current = ThrottleMesh->GetRelativeLocation();
+		FVector Target = FVector(Offset, Current.Y, Current.Z);
+		FVector Smooth = FMath::VInterpTo(Current, Target, DeltaTime, 5.0f);
+
+		ThrottleMesh->SetRelativeLocation(Smooth);
+	}
+
+	if (MixtureMesh)
+	{
+		float Offset = MixtureInput * 20.f;
+
+		FVector Current = MixtureMesh->GetRelativeLocation();
+		FVector Target = FVector(Offset, Current.Y, Current.Z);
+
+		FVector Smooth = FMath::VInterpTo(Current, Target, DeltaTime, 6.f);
+		MixtureMesh->SetRelativeLocation(Smooth);
+	}
+
+	if (BrakeMesh)
+	{
+		float Offset = BrakeInput * 10.f;
+
+		FVector Current = BrakeMesh->GetRelativeLocation();
+		FVector Target = FVector(Current.X, Current.Y, -Offset);
+
+		BrakeMesh->SetRelativeLocation(Target);
+	}
 
 	// ===== Broadcast =====
 	OnThrottleChanged.Broadcast(Throttle);
@@ -113,17 +176,16 @@ void UAirCraftControlComponent::OnYawInput(const FInputActionValue& Value)
 
 float UAirCraftControlComponent::NormalizeAxisForAirCraft(float Value)
 {
-	float Fixed = (Value - 0.5f) * 2.0f;
+	Value = FMath::Clamp(Value, 0.f, 1.f);
 
-	if (FMath::Abs(Fixed) < 0.1f)
+	// 
+	float Fixed = (Value * 2.0f) - 1.0f;
+
+	// DeadZone
+	if (FMath::Abs(Fixed) < DeadZone)
 		return 0.0f;
 
 	return Fixed;
-}
-
-void UAirCraftControlComponent::SetThrottleInAriCraft(float Value)
-{
-	
 }
 
 void UAirCraftControlComponent::SetMixture(float Value)
@@ -144,6 +206,16 @@ void UAirCraftControlComponent::OnThrottleInput(const FInputActionValue& Value)
 	UE_LOG(LogTemp, Warning, TEXT("Throttle: %f"), Throttle);
 
 	
+}
+
+void UAirCraftControlComponent::OnMixtureInput(const FInputActionValue& Value)
+{
+	MixtureInput = FMath::Clamp(Value.Get<float>(), 0.f, 1.f);
+}
+
+void UAirCraftControlComponent::OnBrakeInput(const FInputActionValue& Value)
+{
+	BrakeInput = FMath::Clamp(Value.Get<float>(), 0.f, 1.f);
 }
 
 float UAirCraftControlComponent::ApplyDeadZone(float Value)
