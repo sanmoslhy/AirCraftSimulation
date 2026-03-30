@@ -3,6 +3,9 @@
 
 #include "AirCraftControlComponent.h"
 #include"Components/StaticMeshComponent.h"
+#if __has_include("EasyFlightModelComponent.h")
+#include "EasyFlightModelComponent.h"
+#endif
 
 // Sets default values for this component's properties
 UAirCraftControlComponent::UAirCraftControlComponent()
@@ -48,6 +51,8 @@ void UAirCraftControlComponent::BeginPlay()
 			BrakeMesh = Mesh;
 		}
 	}
+	// ===== EasyFM =====
+	//EasyFM = Owner->FindComponentByClass<UEasyFlightModelComponent>();
 	APlayerController* PC = Cast<APlayerController>(Owner->GetInstigatorController());
 	if (!PC)
 	{
@@ -118,7 +123,12 @@ void UAirCraftControlComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	RotationDelta.Pitch = Pitch * RotationSpeed * DeltaTime;
 	RotationDelta.Roll = Roll * RotationSpeed * DeltaTime;
 	RotationDelta.Yaw = Yaw * RotationSpeed * DeltaTime;
-
+	// ===== EASY FM =====
+	/*if (EasyFM)
+	{
+		float Throttle01 = (Throttle + 1.f) * 0.5f; 
+		EasyFM->SetThrottleInput(Throttle01);
+	}*/
 	//Owner->AddActorLocalRotation(RotationDelta);
 	// ===== VISUAL CONTROLS =====
 

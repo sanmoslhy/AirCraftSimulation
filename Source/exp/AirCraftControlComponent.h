@@ -108,6 +108,8 @@ public:
 	UInputAction* MixtureAction;
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* BrakeAction;
+	//UPROPERTY()
+	//class UEasyFlightModelComoponent* EasyFM;
 
 	// ================= EVENTS =================
 	UPROPERTY(BlueprintAssignable)
