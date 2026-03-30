@@ -100,7 +100,9 @@ void UAirCraftControlComponent::BeginPlay()
 
 			if (BrakeAction)
 			{
-				EIC->BindAction(BrakeAction, ETriggerEvent::Triggered, this, &UAirCraftControlComponent::OnBrakeInput);
+
+				EIC->BindAction(BrakeAction, ETriggerEvent::Started, this, &UAirCraftControlComponent::OnBrakeInputPressed);
+				EIC->BindAction(BrakeAction, ETriggerEvent::Completed, this, &UAirCraftControlComponent::OnBrakeInputReleased);
 			}
 		}
 	}
@@ -223,10 +225,22 @@ void UAirCraftControlComponent::OnMixtureInput(const FInputActionValue& Value)
 	MixtureInput = FMath::Clamp(Value.Get<float>(), 0.f, 1.f);
 }
 
-void UAirCraftControlComponent::OnBrakeInput(const FInputActionValue& Value)
+void UAirCraftControlComponent::OnBrakeInputPressed()
 {
-	BrakeInput = FMath::Clamp(Value.Get<float>(), 0.f, 1.f);
+	BrakeInput = 1.f;
+	UE_LOG(LogTemp, Warning, TEXT("Brake Pressed"));
 }
+
+void UAirCraftControlComponent::OnBrakeInputReleased()
+{
+	BrakeInput = 0.0f;
+	UE_LOG(LogTemp, Warning, TEXT("Brake Released"));
+}
+
+//void UAirCraftControlComponent::OnBrakeInput(const FInputActionValue& Value)
+//{
+//	BrakeInput = FMath::Clamp(Value.Get<float>(), 0.f, 1.f);
+//}
 
 float UAirCraftControlComponent::ApplyDeadZone(float Value)
 {

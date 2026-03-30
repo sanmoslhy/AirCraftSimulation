@@ -130,7 +130,8 @@ public:
 	void SetBrake(float Value);
 	void OnThrottleInput(const FInputActionValue& Value);
 	void OnMixtureInput(const FInputActionValue& Value);
-	void OnBrakeInput(const FInputActionValue& Value);
+	void OnBrakeInputPressed();
+	void OnBrakeInputReleased();
 private:
 	
 	float ApplyDeadZone(float Value);
